@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
+const tokenList = {};
+
 const UserModel = require('../models/UserModel');
 
 module.exports = {
@@ -38,15 +40,30 @@ module.exports = {
                 email: user.email,
                 userId: user._id
               },
-              process.env.JWT_KEY,
+              process.env.tokenSecretKey,
               {
-                expiresIn: '1h'
+                expiresIn: "1h"
               }
             );
-            return res.status(200).json({
+
+            const refreshToken = jwt.sign(
+              {
+                email: user.email,
+                userId: user._id
+              },
+              process.env.refreshTokenSecret,
+              {
+                expiresIn: "24h"
+              }
+            );
+
+            const response = {
               message: 'Authentication successful',
-              token: token
-            });
+              token: token,
+              refreshToken: refreshToken
+            };
+            tokenList[refreshToken] = response;
+            return res.status(200).json(response);
           }
         });
       })
@@ -68,6 +85,31 @@ module.exports = {
 
   removeFavoriteTeacher: (req, res) => {
     res.json({});
+  },
+
+  refreshToken: (req, res) => {
+    var refreshToken = req.body.refreshToken;
+    if (refreshToken && refreshToken in tokenList) {
+      const token = jwt.sign(
+        {
+          email: req.body.email,
+          userId: req.body._id
+        },
+        process.env.refreshTokenSecret,
+        {
+          expiresIn: "1h"
+        }
+      );
+
+      const response = {
+        token: token
+      };
+
+      tokenList[req.body.refreshToken].token = token;
+      res.status(200).json(response);
+    } else {
+      res.status(404).send('Invalid request');
+    }
   },
 
   signup: (req, res) => {

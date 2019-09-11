@@ -1,5 +1,6 @@
 {
     "env" : {
-            "JWT_KEY": "secret_key"
+            "tokenSecretKey": "secret_key",
+            "refreshTokenSecret": "refresh_secret_key"
     }
 }
