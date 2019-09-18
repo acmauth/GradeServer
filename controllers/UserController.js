@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 
 const tokenList = {};
 
+const BioSchema = require('../models/schemas/BioSchema');
 const UserModel = require('../models/UserModel');
 
 module.exports = {
@@ -17,6 +18,18 @@ module.exports = {
 
   getData: (req, res) => {
     res.json({});
+  },
+
+  getProfile: (req, res) => {
+    UserModel.findOne({ _id: req.userData.userId })
+      .exec()
+      .then(user => {
+        user._id = undefined;
+        user.password = undefined;
+        user.__v = undefined;
+        res.json(user);
+      })
+      .catch();
   },
 
   login: (req, res) => {
@@ -42,7 +55,7 @@ module.exports = {
               },
               process.env.tokenSecretKey,
               {
-                expiresIn: "1h"
+                expiresIn: process.env.tokenLife
               }
             );
 
@@ -53,7 +66,7 @@ module.exports = {
               },
               process.env.refreshTokenSecret,
               {
-                expiresIn: "24h"
+                expiresIn: process.env.refreshTokenLife
               }
             );
 
@@ -75,10 +88,6 @@ module.exports = {
       });
   },
 
-  profile: (req, res) => {
-    res.json({});
-  },
-
   removeFavoriteCourse: (req, res) => {
     res.json({});
   },
@@ -97,7 +106,7 @@ module.exports = {
         },
         process.env.refreshTokenSecret,
         {
-          expiresIn: "1h"
+          expiresIn: process.env.tokenLife
         }
       );
 
@@ -149,6 +158,42 @@ module.exports = {
           });
         }
       });
+  },
+
+  updateBio: (req, res) => {
+    const id = req.userData.userId;
+    const fields = {};
+
+    BioSchema.eachPath(path => {
+      if (req.body[path]) {
+        fields[`bio.${path}`] = req.body[path];
+      }
+    });
+    
+    // TODO Validation
+    UserModel.updateOne(
+      { _id: id },
+      {
+        $set: fields
+      }
+    )
+      .exec()
+      .then(status => {
+        if (status.nModified == 1) {
+          // UserModel.findById(id)
+          //   .exec()
+          //   .then(user => {
+          //     user._id = undefined;
+          //     user.password = undefined;
+          //     user.__v = undefined;
+          //     res.json(user);
+          //   });
+          res.status(200).send(status);
+        } else {
+          res.status(400).send(status);
+        }
+      })
+      .catch(err => res.status(400).send(err));
   },
 
   updateGrades: (req, res) => {
