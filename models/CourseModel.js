@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const CourseInfoSchema = new Schema({
+  _id: false,
   basic_info: {
     title: { type: String, required: true },
     code: String,
