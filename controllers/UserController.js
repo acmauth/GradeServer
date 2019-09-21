@@ -6,14 +6,109 @@ const tokenList = {};
 
 const BioSchema = require('../models/schemas/BioSchema');
 const UserModel = require('../models/UserModel');
+const CourseModel = require('../models/CourseModel');
+const TeacherModel = require('../models/TeacherModel');
+
+const Favorites = {
+  COURSES: {
+    model: CourseModel,
+    collection: 'courses',
+    path: 'basic_info.code',
+    set: 'favorite_subjects'
+  },
+  TEACHERS: {
+    model: TeacherModel,
+    collection: 'teachers',
+    path: 'teacher_id',
+    set: 'favorite_teachers'
+  }
+};
+
+function addFavorite(req, res, favorite) {
+  var list = [];
+  var promises = [];
+  if (!req.body[favorite.collection]) {
+    res.status(400).send();
+    return;
+  }
+  req.body[favorite.collection].forEach(async item => {
+    const query = {};
+    query[favorite.path] = item;
+    promises.push(
+      favorite.model
+        .countDocuments(query)
+        .exec()
+        .then(count => {
+          if (count > 0) {
+            list.push(item);
+          }
+        })
+        .catch()
+    );
+  });
+
+  Promise.all(promises).then(() => {
+    if (list.length != 0) {
+      const query = {};
+      query[favorite.set] = list;
+      UserModel.updateOne({ _id: req.userData.userId }, { $addToSet: query })
+        .exec()
+        .then(res.status(204).send())
+        .catch();
+    } else {
+      res.status(400).json(err => {
+        message: 'Invalid id';
+      });
+    }
+  });
+}
+
+function removeFavorite(req, res, favorite) {
+  var list = [];
+  var promises = [];
+  if (!req.body[favorite.collection]) {
+    res.status(400).send();
+    return;
+  }
+  req.body[favorite.collection].forEach(async item => {
+    const query = {};
+    query[favorite.path] = item;
+    promises.push(
+      favorite.model
+        .countDocuments(query)
+        .exec()
+        .then(count => {
+          if (count > 0) {
+            list.push(item);
+          }
+        })
+        .catch()
+    );
+  });
+
+  Promise.all(promises).then(() => {
+    if (list.length != 0) {
+      const query = {};
+      query[favorite.set] = { $in: list };
+      UserModel.updateOne({ _id: req.userData.userId }, { $pull: query })
+        .exec()
+        .then(res.status(204).send())
+        .catch();
+    } else {
+      res.status(400).json(() => {
+        message: 'Invalid id';
+      });
+    }
+  });
+}
 
 module.exports = {
   addFavoriteCourse: (req, res) => {
-    res.json({});
+    addFavorite(req, res, Favorites.COURSES);
   },
 
   addFavoriteTeacher: (req, res) => {
-    res.json({});
+    addFavorite(req, res, Favorites.TEACHERS);
   },
 
   getData: (req, res) => {
@@ -89,11 +184,11 @@ module.exports = {
   },
 
   removeFavoriteCourse: (req, res) => {
-    res.json({});
+    removeFavorite(req, res, Favorites.COURSES);
   },
 
   removeFavoriteTeacher: (req, res) => {
-    res.json({});
+    removeFavorite(req, res, Favorites.TEACHERS);
   },
 
   refreshToken: (req, res) => {
@@ -169,7 +264,7 @@ module.exports = {
         fields[`bio.${path}`] = req.body[path];
       }
     });
-    
+
     // TODO Validation
     UserModel.updateOne(
       { _id: id },

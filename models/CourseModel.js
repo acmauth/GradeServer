@@ -1,44 +1,28 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const CourseSchema = new Schema({
-  title: { type: String, require: true },
-  code: String,
-  period: String,
-  teacher: String
-});
-
-const ClassSchema = new Schema({
-  year: String,
-  teachers: [String]
-});
-
-const BasicInfoSchema = new Schema({
-  course: CourseSchema,
-  class: ClassSchema
-});
-
-const PrerequisitesSchema = new Schema({
-  courses: [String],
-  knowledge: [String]
-});
-
-const AssessmentSchema = new Schema({
-  description: String,
-  methods: [String]
-});
-
-const ExtraDataSchema = new Schema({
-  erasmus: Boolean,
-  prerequisites: PrerequisitesSchema,
-  goal: String,
-  content: [String],
-  assessment: AssessmentSchema
-});
-
 const CourseInfoSchema = new Schema({
-  basic_info: BasicInfoSchema,
-  extra_data: ExtraDataSchema
+  basic_info: {
+    title: { type: String, required: true },
+    code: String,
+    period: String,
+    teacher: String,
+    year: String,
+    teachers: [String]
+  },
+  extra_data: {
+    erasmus: Boolean,
+    prerequisites: {
+      courses: [String],
+      knowledge: [String]
+    },
+    goal: String,
+    content: [String],
+    assessment: {
+      description: String,
+      methods: [String]
+    }
+  }
 });
 
-module.exports = mongoose.model('CourseInfo', CourseInfoSchema);
+module.exports = mongoose.model('Course', CourseInfoSchema);
