@@ -4,19 +4,127 @@ const jwt = require('jsonwebtoken');
 
 const tokenList = {};
 
+const BioSchema = require('../models/schemas/BioSchema');
 const UserModel = require('../models/UserModel');
+const CourseModel = require('../models/CourseModel');
+const TeacherModel = require('../models/TeacherModel');
+
+const Favorites = {
+  COURSES: {
+    model: CourseModel,
+    collection: 'courses',
+    path: 'basic_info.code',
+    set: 'favorite_subjects'
+  },
+  TEACHERS: {
+    model: TeacherModel,
+    collection: 'teachers',
+    path: 'teacher_id',
+    set: 'favorite_teachers'
+  }
+};
+
+function addFavorite(req, res, favorite) {
+  var list = [];
+  var promises = [];
+  if (!req.body[favorite.collection]) {
+    res.status(400).send();
+    return;
+  }
+  req.body[favorite.collection].forEach(async item => {
+    const query = {};
+    query[favorite.path] = item;
+    promises.push(
+      favorite.model
+        .countDocuments(query)
+        .exec()
+        .then(count => {
+          if (count > 0) {
+            list.push(item);
+          }
+        })
+        .catch()
+    );
+  });
+
+  Promise.all(promises).then(() => {
+    if (list.length != 0) {
+      const query = {};
+      query[favorite.set] = list;
+      UserModel.updateOne({ _id: req.userData.userId }, { $addToSet: query })
+        .exec()
+        .then(res.status(204).send())
+        .catch();
+    } else {
+      res.status(400).json(err => {
+        message: 'Invalid id';
+      });
+    }
+  });
+}
+
+function removeFavorite(req, res, favorite) {
+  var list = [];
+  var promises = [];
+  if (!req.body[favorite.collection]) {
+    res.status(400).send();
+    return;
+  }
+  req.body[favorite.collection].forEach(async item => {
+    const query = {};
+    query[favorite.path] = item;
+    promises.push(
+      favorite.model
+        .countDocuments(query)
+        .exec()
+        .then(count => {
+          if (count > 0) {
+            list.push(item);
+          }
+        })
+        .catch()
+    );
+  });
+
+  Promise.all(promises).then(() => {
+    if (list.length != 0) {
+      const query = {};
+      query[favorite.set] = { $in: list };
+      UserModel.updateOne({ _id: req.userData.userId }, { $pull: query })
+        .exec()
+        .then(res.status(204).send())
+        .catch();
+    } else {
+      res.status(400).json(() => {
+        message: 'Invalid id';
+      });
+    }
+  });
+}
 
 module.exports = {
   addFavoriteCourse: (req, res) => {
-    res.json({});
+    addFavorite(req, res, Favorites.COURSES);
   },
 
   addFavoriteTeacher: (req, res) => {
-    res.json({});
+    addFavorite(req, res, Favorites.TEACHERS);
   },
 
   getData: (req, res) => {
     res.json({});
+  },
+
+  getProfile: (req, res) => {
+    UserModel.findOne({ _id: req.userData.userId })
+      .exec()
+      .then(user => {
+        user._id = undefined;
+        user.password = undefined;
+        user.__v = undefined;
+        res.json(user);
+      })
+      .catch();
   },
 
   login: (req, res) => {
@@ -42,7 +150,7 @@ module.exports = {
               },
               process.env.tokenSecretKey,
               {
-                expiresIn: "1h"
+                expiresIn: process.env.tokenLife
               }
             );
 
@@ -53,7 +161,7 @@ module.exports = {
               },
               process.env.refreshTokenSecret,
               {
-                expiresIn: "24h"
+                expiresIn: process.env.refreshTokenLife
               }
             );
 
@@ -75,16 +183,12 @@ module.exports = {
       });
   },
 
-  profile: (req, res) => {
-    res.json({});
-  },
-
   removeFavoriteCourse: (req, res) => {
-    res.json({});
+    removeFavorite(req, res, Favorites.COURSES);
   },
 
   removeFavoriteTeacher: (req, res) => {
-    res.json({});
+    removeFavorite(req, res, Favorites.TEACHERS);
   },
 
   refreshToken: (req, res) => {
@@ -97,7 +201,7 @@ module.exports = {
         },
         process.env.refreshTokenSecret,
         {
-          expiresIn: "1h"
+          expiresIn: process.env.tokenLife
         }
       );
 
@@ -149,6 +253,42 @@ module.exports = {
           });
         }
       });
+  },
+
+  updateBio: (req, res) => {
+    const id = req.userData.userId;
+    const fields = {};
+
+    BioSchema.eachPath(path => {
+      if (req.body[path]) {
+        fields[`bio.${path}`] = req.body[path];
+      }
+    });
+
+    // TODO Validation
+    UserModel.updateOne(
+      { _id: id },
+      {
+        $set: fields
+      }
+    )
+      .exec()
+      .then(status => {
+        if (status.nModified == 1) {
+          // UserModel.findById(id)
+          //   .exec()
+          //   .then(user => {
+          //     user._id = undefined;
+          //     user.password = undefined;
+          //     user.__v = undefined;
+          //     res.json(user);
+          //   });
+          res.status(200).send(status);
+        } else {
+          res.status(400).send(status);
+        }
+      })
+      .catch(err => res.status(400).send(err));
   },
 
   updateGrades: (req, res) => {

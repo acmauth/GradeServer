@@ -9,7 +9,9 @@ const deleteUser = require('../middleware/delete-user');
 
 router.get('/download_data', checkAuth, UserController.getData);
 
-router.get('/profile', checkAuth, UserController.profile);
+router.get('/profile', checkAuth, UserController.getProfile);
+
+router.patch('/profile', checkAuth, UserController.updateBio);
 
 router.put('/grades', checkAuth, UserController.updateGrades);
 
