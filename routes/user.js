@@ -17,6 +17,8 @@ router.put('/grades', checkAuth, UserController.updateGrades);
 
 router.delete('/request_deletion', checkAuth, deleteUser);
 
+router.patch('/post_registration', checkAuth, UserController.postRegistration);
+
 /* Favorites */
 
 router.patch('/favorites/course', checkAuth, UserController.addFavoriteCourse);
