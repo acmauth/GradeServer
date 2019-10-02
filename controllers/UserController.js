@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const tokenList = {};
 
 const BioSchema = require('../models/schemas/BioSchema');
+const PostRegistrationSchema = require('../models/schemas/PostRegistrationSchema');
 const UserModel = require('../models/UserModel');
 const CourseModel = require('../models/CourseModel');
 const TeacherModel = require('../models/TeacherModel');
@@ -181,6 +182,33 @@ module.exports = {
           error: err
         });
       });
+  },
+
+  postRegistration: (req, res) => {
+    const id = req.userData.userId;
+    const fields = {};
+
+    PostRegistrationSchema.eachPath(path => {
+      if (req.body[path]) {
+        fields[`postRegistrationInfo.${path}`] = req.body[path];
+      }
+    });
+
+    UserModel.updateOne(
+      { _id: id },
+      {
+        $set: fields
+      }
+    )
+      .exec()
+      .then(status => {
+        if (status.nModified == 1) {
+          res.status(200).send(status);
+        } else {
+          res.status(400).send(status);
+        }
+      })
+      .catch(err => res.status(400).send(err));
   },
 
   removeFavoriteCourse: (req, res) => {
