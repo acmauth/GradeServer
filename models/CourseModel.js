@@ -2,14 +2,16 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const CourseInfoSchema = new Schema({
-  _id: false,
+  _id: { type: String, required: true },
   basic_info: {
     title: { type: String, required: true },
     code: String,
     period: String,
     teacher: String,
-    year: String,
-    teachers: [String]
+    class: {
+      year: String,
+      teachers: [String]
+    }
   },
   extra_data: {
     erasmus: Boolean,
