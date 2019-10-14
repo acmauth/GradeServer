@@ -11,7 +11,8 @@ const authRoutes = require('./routes/auth');
 // Database
 mongoose
   .connect('mongodb://127.0.0.1:27017/grade_plus_plus', {
-    useNewUrlParser: true
+    useNewUrlParser: true,
+    useUnifiedTopology: true
   })
   .then(() => console.log('Connected to database...'))
   .catch(err => console.error(err));

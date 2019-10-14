@@ -14,13 +14,11 @@ const Favorites = {
   COURSES: {
     model: CourseModel,
     collection: 'courses',
-    path: 'basic_info.code',
     set: 'favorite_subjects'
   },
   TEACHERS: {
     model: TeacherModel,
     collection: 'teachers',
-    path: 'teacher_id',
     set: 'favorite_teachers'
   }
 };
@@ -34,7 +32,7 @@ function addFavorite(req, res, favorite) {
   }
   req.body[favorite.collection].forEach(async item => {
     const query = {};
-    query[favorite.path] = item;
+    query['_id'] = item;
     promises.push(
       favorite.model
         .countDocuments(query)
@@ -57,8 +55,8 @@ function addFavorite(req, res, favorite) {
         .then(res.status(204).send())
         .catch();
     } else {
-      res.status(400).json(err => {
-        message: 'Invalid id';
+      res.status(400).json({
+        message: 'Invalid id'
       });
     }
   });
@@ -139,9 +137,9 @@ module.exports = {
         }
         bcrypt.compare(req.body.password, user.password, (err, success) => {
           if (err) {
-            return res.status(401).json({
-              message: 'Authentication failed'
-            });
+            // Error occurred when comparing passwords.
+            // Reject request with internal error.
+            return res.status(500).send();
           }
           if (success) {
             const token = jwt.sign(
@@ -174,6 +172,9 @@ module.exports = {
             tokenList[refreshToken] = response;
             return res.status(200).json(response);
           }
+          return res.status(401).json({
+            message: 'Authentication failed'
+          });
         });
       })
       .catch(err => {
