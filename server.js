@@ -22,7 +22,12 @@ mongoose.set('useCreateIndex', true);
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(fileUpload());
+app.use(
+  fileUpload({
+    preserveExtension: true
+    // safeFileNames: true
+  })
+);
 
 // Routes
 

@@ -19,7 +19,7 @@ async function fetchCourse(courses, index) {
     .then(res => res.json())
     .then(json => {
       const classID = json.course.classID;
-      const title = json.course.title;
+      const name = json.course.title;
       const titleEN = json.course.titleEN;
       // const ects = json.course.ects;
 
@@ -44,7 +44,7 @@ async function fetchCourse(courses, index) {
           new CourseModel({
             _id: id,
             basic_info: {
-              title,
+              name,
               code,
               period: clazz.periodID,
               teacher: qa_gen.course_info.teacher_in_charge,

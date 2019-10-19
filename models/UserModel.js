@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const BioSchema = require('./schemas/BioSchema');
-const SemesterSchema = require('./schemas/SemesterSchema');
+const PassedCourseSchema = require('./schemas/PassedCourseSchema');
 const PostRegistrationSchema = require('./schemas/PostRegistrationSchema');
 
 const UserSchema = new Schema({
@@ -17,8 +17,9 @@ const UserSchema = new Schema({
   bio: { type: BioSchema, default: {} },
   favorite_subjects: [String],
   favorite_teachers: [String],
-  grades: [SemesterSchema],
-  postRegistrationInfo: { type: PostRegistrationSchema, default: {} }
+  grades: [PassedCourseSchema],
+  postRegistrationInfo: { type: PostRegistrationSchema, default: {} },
+  estimated_year: Number
 });
 
 module.exports = mongoose.model('User', UserSchema);

@@ -5,6 +5,5 @@ module.exports = new Schema({
   _id: false,
   name: String,
   school: String,
-  semester: Number,
-  estimated_year: Number
+  semester: Number
 });
