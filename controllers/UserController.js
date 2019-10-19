@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const fileUpload = require('express-fileupload');
+const { exec } = require('child_process');
 
 const tokenList = {};
 
@@ -101,6 +103,37 @@ function removeFavorite(req, res, favorite) {
   });
 }
 
+function generateToken(user) {
+  const token = jwt.sign(
+    {
+      email: user.email,
+      userId: user._id
+    },
+    process.env.tokenSecretKey,
+    {
+      expiresIn: process.env.tokenLife
+    }
+  );
+
+  const refreshToken = jwt.sign(
+    {
+      email: user.email,
+      userId: user._id
+    },
+    process.env.refreshTokenSecret,
+    {
+      expiresIn: process.env.refreshTokenLife
+    }
+  );
+
+  const response = {
+    token: token,
+    refreshToken: refreshToken
+  };
+  tokenList[refreshToken] = response;
+  return response;
+}
+
 module.exports = {
   addFavoriteCourse: (req, res) => {
     addFavorite(req, res, Favorites.COURSES);
@@ -118,10 +151,69 @@ module.exports = {
     UserModel.findOne({ _id: req.userData.userId })
       .exec()
       .then(user => {
+        user = user.toJSON();
         user._id = undefined;
         user.password = undefined;
         user.__v = undefined;
-        res.json(user);
+        var promises = [];
+        user.grades.forEach(course => {
+          promises.push(
+            CourseModel.findOne({ _id: course._id })
+              .exec()
+              .then(passedCourse => {
+                if (!passedCourse) {
+                  // res.status(400).send();
+                  return;
+                }
+
+                course.name = passedCourse.basic_info.name;
+                course.teacher = passedCourse.basic_info.class.teachers.join(
+                  ', '
+                );
+              })
+              .catch()
+          );
+        });
+
+        var subjects = [];
+        user.favorite_subjects.forEach(subject => {
+          promises.push(
+            CourseModel.findOne({ _id: subject })
+              .exec()
+              .then(course => {
+                if (!course) {
+                  // res.status(400).send();
+                  return;
+                }
+
+                subjects.push(course.basic_info.name);
+              })
+              .catch()
+          );
+        });
+
+        var teachers = [];
+        user.favorite_teachers.forEach(teacher => {
+          promises.push(
+            TeacherModel.findOne({ _id: teacher })
+              .exec()
+              .then(selected => {
+                if (!selected) {
+                  // res.status(400).send();
+                  return;
+                }
+
+                teachers.push(selected.name);
+              })
+              .catch()
+          );
+        });
+
+        Promise.all(promises).then(() => {
+          user.favorite_subjects = subjects;
+          user.favorite_teachers = teachers;
+          res.json(user);
+        });
       })
       .catch();
   },
@@ -131,9 +223,7 @@ module.exports = {
       .exec()
       .then(user => {
         if (!user) {
-          return res.status(401).json({
-            message: 'Authentication failed'
-          });
+          return res.status(401).send();
         }
         bcrypt.compare(req.body.password, user.password, (err, success) => {
           if (err) {
@@ -142,39 +232,9 @@ module.exports = {
             return res.status(500).send();
           }
           if (success) {
-            const token = jwt.sign(
-              {
-                email: user.email,
-                userId: user._id
-              },
-              process.env.tokenSecretKey,
-              {
-                expiresIn: process.env.tokenLife
-              }
-            );
-
-            const refreshToken = jwt.sign(
-              {
-                email: user.email,
-                userId: user._id
-              },
-              process.env.refreshTokenSecret,
-              {
-                expiresIn: process.env.refreshTokenLife
-              }
-            );
-
-            const response = {
-              message: 'Authentication successful',
-              token: token,
-              refreshToken: refreshToken
-            };
-            tokenList[refreshToken] = response;
-            return res.status(200).json(response);
+            return res.status(200).json(generateToken(user));
           }
-          return res.status(401).json({
-            message: 'Authentication failed'
-          });
+          return res.status(401).send();
         });
       })
       .catch(err => {
@@ -268,9 +328,7 @@ module.exports = {
               user
                 .save()
                 .then(result => {
-                  res.status(201).json({
-                    message: 'User created!'
-                  });
+                  res.status(201).json(generateToken(user));
                 })
                 .catch(err => {
                   console.log(err);
@@ -320,7 +378,57 @@ module.exports = {
       .catch(err => res.status(400).send(err));
   },
 
-  updateGrades: (req, res) => {
-    res.json({});
+  updateGradesList: (req, res) => {
+    UserModel.findOne({ _id: req.userData.userId })
+      .exec()
+      .then(user => {
+        req.body.courses.forEach(course => {
+          // TODO id exists, grade/year/semester limits
+          var passedCourse = user.grades.find(
+            element => element.id === course.id
+          );
+          if (!passedCourse) {
+            passedCourse = {
+              _id: course.id,
+              grade: course.grade,
+              year_passed: course.year,
+              semester: course.semester
+            };
+            user.grades.push(passedCourse);
+          } else {
+            passedCourse.grade = course.grade;
+            passedCourse.year_passed = course.year;
+            passedCourse.semester = course.semester;
+            console.log(passedCourse);
+          }
+        });
+        user.save();
+        res.status(201).send();
+      })
+      .catch();
+  },
+
+  updateGradesPDF: (req, res) => {
+    var name = req.files.grades.name;
+    var index = name.lastIndexOf('.'); // TODO no dot?
+    var ext = name.substring(index + 1);
+    var dt = new Date().getTime() + '.' + ext;
+    req.files.grades.mv(`./files/${dt}`, err => {
+      if (err) {
+        res.status(500).send();
+        console.log(err);
+        return;
+      }
+
+      exec(`java -jar ./parser.jar './files/${dt}'`, (error, out) => {
+        if (error) {
+          res.status(500).send();
+          console.log(error);
+          return;
+        }
+        //TODO Continue
+        res.status(200).send();
+      });
+    });
   }
 };

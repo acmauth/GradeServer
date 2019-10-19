@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const CourseInfoSchema = new Schema({
   _id: { type: String, required: true },
   basic_info: {
-    title: { type: String, required: true },
+    name: { type: String, required: true },
     code: String,
     period: String,
     teacher: String,
@@ -25,6 +25,10 @@ const CourseInfoSchema = new Schema({
       description: String,
       methods: [String]
     }
+  },
+  metrics: {
+    distribution: [Number],
+    difficulty: Number
   }
 });
 
