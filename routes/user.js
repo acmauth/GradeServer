@@ -19,8 +19,6 @@ router.put('/grades/pdf', checkAuth, UserController.updateGradesPDF);
 
 router.delete('/request_deletion', checkAuth, deleteUser);
 
-router.patch('/post_registration', checkAuth, UserController.postRegistration);
-
 /* Favorites */
 
 router.patch('/favorites/course', checkAuth, UserController.addFavoriteCourse);
