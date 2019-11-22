@@ -3,11 +3,11 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const fileUpload = require('express-fileupload');
 const { exec } = require('child_process');
+const fs = require('fs');
 
 const tokenList = {};
 
 const BioSchema = require('../models/schemas/BioSchema');
-const PostRegistrationSchema = require('../models/schemas/PostRegistrationSchema');
 const UserModel = require('../models/UserModel');
 const CourseModel = require('../models/CourseModel');
 const TeacherModel = require('../models/TeacherModel');
@@ -132,6 +132,25 @@ function generateToken(user) {
   };
   tokenList[refreshToken] = response;
   return response;
+}
+
+function updateGrades(user, course) {
+  // TODO id exists, grade/year/semester limits
+
+  var passedCourse = user.grades.find(element => element.id === course.id);
+  if (!passedCourse) {
+    passedCourse = {
+      _id: course.id,
+      grade: course.grade,
+      year_passed: course.year,
+      semester: course.semester
+    };
+    user.grades.push(passedCourse);
+  } else {
+    passedCourse.grade = course.grade;
+    passedCourse.year_passed = course.year;
+    passedCourse.semester = course.semester;
+  }
 }
 
 module.exports = {
@@ -327,7 +346,7 @@ module.exports = {
               });
               user
                 .save()
-                .then(result => {
+                .then(() => {
                   res.status(201).json(generateToken(user));
                 })
                 .catch(err => {
@@ -382,25 +401,12 @@ module.exports = {
     UserModel.findOne({ _id: req.userData.userId })
       .exec()
       .then(user => {
+        if (!user) {
+          res.status(400).send();
+          return;
+        }
         req.body.courses.forEach(course => {
-          // TODO id exists, grade/year/semester limits
-          var passedCourse = user.grades.find(
-            element => element.id === course.id
-          );
-          if (!passedCourse) {
-            passedCourse = {
-              _id: course.id,
-              grade: course.grade,
-              year_passed: course.year,
-              semester: course.semester
-            };
-            user.grades.push(passedCourse);
-          } else {
-            passedCourse.grade = course.grade;
-            passedCourse.year_passed = course.year;
-            passedCourse.semester = course.semester;
-            console.log(passedCourse);
-          }
+          updateGrades(user, course);
         });
         user.save();
         res.status(201).send();
@@ -412,23 +418,73 @@ module.exports = {
     var name = req.files.grades.name;
     var index = name.lastIndexOf('.'); // TODO no dot?
     var ext = name.substring(index + 1);
-    var dt = new Date().getTime() + '.' + ext;
-    req.files.grades.mv(`./files/${dt}`, err => {
+    var dt = new Date().getTime();
+    var file = dt + '.' + ext;
+    var filePath = `./files/${file}`;
+    req.files.grades.mv(filePath, err => {
       if (err) {
         res.status(500).send();
         console.log(err);
         return;
       }
 
-      exec(`java -jar ./parser.jar './files/${dt}'`, (error, out) => {
-        if (error) {
-          res.status(500).send();
-          console.log(error);
-          return;
+      exec(
+        `java -jar ./parser.jar -json './files/${file}'`,
+        (error, stdout, stderr) => {
+          if (error) {
+            res.status(500).send();
+            console.log(error);
+            return;
+          }
+          var jsonPath = `./json/${dt}_results.json`;
+          var gradesJSON = require(`.${jsonPath}`);
+          UserModel.findOne({ _id: req.userData.userId })
+            .exec()
+            .then(user => {
+              if (!user) {
+                res.status(400).send();
+                return;
+              }
+              var promises = [];
+              gradesJSON.courses.forEach(course => {
+                if (course.grade) {
+                  promises.push(
+                    CourseModel.findOne({ 'basic_info.code': course.code })
+                      .exec()
+                      .then(courseData => {
+                        if (courseData) {
+                          var updatedCourse = {
+                            id: courseData._id,
+                            year: course.year,
+                            semester: courseData.basic_info.period,
+                            grade: course.grade
+                          };
+
+                          updateGrades(user, updatedCourse);
+                        }
+                      })
+                      .catch()
+                  );
+                }
+              });
+              if (promises.length != 0) {
+                Promise.all(promises).then(() => user.save());
+              }
+            })
+            .catch();
+          res.status(201).send();
+          fs.unlink(filePath, err => {
+            if (err) {
+              console.log(err);
+            }
+          });
+          fs.unlink(jsonPath, err => {
+            if (err) {
+              console.log(err);
+            }
+          });
         }
-        //TODO Continue
-        res.status(200).send();
-      });
+      );
     });
   }
 };

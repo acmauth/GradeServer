@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const fileUpload = require('express-fileupload');
+const dotenv = require('dotenv');
 const app = express();
 
 const userRoutes = require('./routes/user');
@@ -8,9 +9,11 @@ const courseRoutes = require('./routes/course');
 const listRoutes = require('./routes/list');
 const authRoutes = require('./routes/auth');
 
+dotenv.config();
+
 // Database
 mongoose
-  .connect('mongodb://127.0.0.1:27017/grade_plus_plus', {
+  .connect(process.env.db, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   })

@@ -5,5 +5,13 @@ module.exports = new Schema({
   _id: false,
   name: String,
   school: String,
-  semester: Number
+  semester: Number,
+  reason: [String],
+  study_time: Number,
+  lectures: String,
+  privateLessons: Boolean,
+  postgraduate: String,
+  roomates: String,
+  distance: String,
+  hobbies: [String]
 });
