@@ -1,8 +1,0 @@
-{
-    "env" : {
-            "tokenSecretKey": "secret_key",
-            "refreshTokenSecret": "refresh_secret_key",
-            "tokenLife": "1d",
-            "refreshTokenLife": "30d"
-    }
-}
