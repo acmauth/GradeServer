@@ -8,7 +8,7 @@ const checkAuth = require('../middleware/check-auth');
 
 router.get('/info/:course_id', checkAuth, CourseController.info);
 
-router.get('/predict/:course_id', checkAuth, CourseController.predict);
+router.get('/predict/', checkAuth, CourseController.predict);
 
 router.get('/suggest', checkAuth, CourseController.suggest);
 

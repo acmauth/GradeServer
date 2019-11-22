@@ -3,7 +3,6 @@ const Schema = mongoose.Schema;
 
 const BioSchema = require('./schemas/BioSchema');
 const PassedCourseSchema = require('./schemas/PassedCourseSchema');
-const PostRegistrationSchema = require('./schemas/PostRegistrationSchema');
 
 const UserSchema = new Schema({
   _id: mongoose.Schema.Types.ObjectId,
@@ -18,7 +17,6 @@ const UserSchema = new Schema({
   favorite_subjects: [String],
   favorite_teachers: [String],
   grades: [PassedCourseSchema],
-  postRegistrationInfo: { type: PostRegistrationSchema, default: {} },
   estimated_year: Number
 });
 

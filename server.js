@@ -13,7 +13,7 @@ dotenv.config();
 
 // Database
 mongoose
-  .connect('mongodb://127.0.0.1:27017/grade_plus_plus', {
+  .connect(process.env.db, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   })

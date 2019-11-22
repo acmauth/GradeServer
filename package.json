@@ -7,8 +7,11 @@
     "start": "nodemon server.js"
   },
   "nodemonConfig": {
-    "ignore": ["files/*", "json/*"]
-},
+    "ignore": [
+      "files/*",
+      "json/*"
+    ]
+  },
   "author": "Grade++ team",
   "license": "ISC",
   "dependencies": {
@@ -22,6 +25,6 @@
   },
   "devDependencies": {
     "node-fetch": "^2.6.0",
-    "nodemon": "^1.19.1"
+    "nodemon": "^1.19.4"
   }
 }

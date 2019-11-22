@@ -8,7 +8,6 @@ const fs = require('fs');
 const tokenList = {};
 
 const BioSchema = require('../models/schemas/BioSchema');
-const PostRegistrationSchema = require('../models/schemas/PostRegistrationSchema');
 const UserModel = require('../models/UserModel');
 const CourseModel = require('../models/CourseModel');
 const TeacherModel = require('../models/TeacherModel');
@@ -347,7 +346,7 @@ module.exports = {
               });
               user
                 .save()
-                .then(result => {
+                .then(() => {
                   res.status(201).json(generateToken(user));
                 })
                 .catch(err => {
