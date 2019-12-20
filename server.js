@@ -2,6 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const fileUpload = require('express-fileupload');
 const dotenv = require('dotenv');
+const morgan = require('morgan');
+const rfs = require('rotating-file-stream');
+const path = require('path');
 const app = express();
 
 const userRoutes = require('./routes/user');
@@ -9,6 +12,10 @@ const courseRoutes = require('./routes/course');
 const listRoutes = require('./routes/list');
 const authRoutes = require('./routes/auth');
 
+var accessLogStream = rfs.createStream('access.log', {
+  interval: '1d',
+  path: path.join(__dirname, 'log')
+});
 dotenv.config();
 
 // Database
@@ -31,6 +38,8 @@ app.use(
     // safeFileNames: true
   })
 );
+
+app.use(morgan('combined', { stream: accessLogStream }));
 
 // Routes
 

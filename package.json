@@ -9,7 +9,8 @@
   "nodemonConfig": {
     "ignore": [
       "files/*",
-      "json/*"
+      "json/*",
+      "hs_err_pid*.log"
     ]
   },
   "author": "Grade++ team",
@@ -21,7 +22,9 @@
     "express-fileupload": "^1.1.5",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.7.5",
-    "request": "^2.88.0"
+    "morgan": "^1.9.1",
+    "request": "^2.88.0",
+    "rotating-file-stream": "^2.0.0"
   },
   "devDependencies": {
     "node-fetch": "^2.6.0",
