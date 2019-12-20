@@ -64,3 +64,4 @@ typings/
 files/
 json/
 csv/
+nodemon.json
