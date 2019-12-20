@@ -186,7 +186,7 @@ module.exports = {
                 }
 
                 course.name = passedCourse.basic_info.name;
-                course.teacher = passedCourse.basic_info.class.teachers.join(
+                course.teacher = [...new Set(passedCourse.basic_info.class.teachers)].join(
                   ', '
                 );
               })
@@ -242,7 +242,9 @@ module.exports = {
       .exec()
       .then(user => {
         if (!user) {
-          return res.status(401).send();
+          return res.status(401).json({
+            error: "Invalid credentials"
+          });
         }
         bcrypt.compare(req.body.password, user.password, (err, success) => {
           if (err) {
@@ -253,7 +255,9 @@ module.exports = {
           if (success) {
             return res.status(200).json(generateToken(user));
           }
-          return res.status(401).send();
+          return res.status(401).json({
+            error: "Invalid credentials"
+          });
         });
       })
       .catch(err => {
@@ -335,8 +339,8 @@ module.exports = {
         } else {
           bcrypt.hash(req.body.password, 10, (err, hash) => {
             if (err) {
-              return res.status(500).json({
-                error: err
+              return res.status(400).json({
+                error: "Invalid request"
               });
             } else {
               const user = new UserModel({
@@ -352,7 +356,7 @@ module.exports = {
                 .catch(err => {
                   console.log(err);
                   res.status(500).json({
-                    error: err
+                    error: "Invalid credentials"
                   });
                 });
             }
@@ -432,7 +436,9 @@ module.exports = {
         `java -jar ./parser.jar -json './files/${file}'`,
         (error, stdout, stderr) => {
           if (error) {
-            res.status(500).send();
+            res.status(500).json({
+              error: "Invalid file"
+            });
             console.log(error);
             return;
           }
