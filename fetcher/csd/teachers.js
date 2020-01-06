@@ -11,54 +11,46 @@ const TEACHERS = BASE_URL + 'getDeptDEP/' + DEPARTMENT;
 const TEACHER_CLASSES = BASE_URL + 'getClassesTaughtByDEP/';
 const TEACHER_INFO = BASE_URL + 'getPersonInfo/';
 
-function saveTeacher(name, teacher_id, courses) {
+async function saveTeacher(name, teacher_id, courses) {
   console.log(`[${teacher_id}] ${name}`);
-  new TeacherModel({
+  await new TeacherModel({
     _id: teacher_id,
     name,
     courses
   }).save();
 }
 
-async function fetchTeacher(teachers, index) {
-  const teacher = teachers[index];
-  const id = teacher.apmId;
-  let name = null;
+async function fetchTeachers(teachers) {
+  while (teachers.length > 0) {
+    const teacher = teachers.shift();
+    const id = teacher.apmId;
+    let name = null;
 
-  fetch(TEACHER_CLASSES + id)
-    .then(res => res.json())
-    .then(json => {
-      let courses = json.classes.map(clazz => clazz.courseID);
+    try {
+        const json = await fetch(TEACHER_CLASSES + id).then(res => res.json())
+        const courses = json.classes.map(clazz => clazz.courseID);
 
-      json.classes.forEach(clazz => {
-        if (clazz.instructors.split(',').length == 1) {
-          name = clazz.instructors;
-          return;
-        }
-      });
+        json.classes.forEach(clazz => {
+          if (clazz.instructors.split(',').length == 1)
+            name = clazz.instructors;
+        });
 
-      if (name != null) {
-        saveTeacher(name, id, courses);
-      } else {
-        fetch(TEACHER_INFO + id)
+        if (name != null) {
+          await saveTeacher(name, id, courses);
+        } else {
+          await fetch(TEACHER_INFO + id)
           .then(res => res.json())
           .then(json => saveTeacher(`${json.first} ${json.last}`, id, courses));
-      }
-    })
-    .catch(err => {
+        }
+    } catch (err) {
       console.error(err);
       teachers.push(teacher);
-    })
-    .then(() =>
-      setTimeout(() => {
-        if (++index < teachers.length) {
-          fetchTeacher(teachers, index);
-        } else {
-          console.log('Done!');
-          mongoose.disconnect();
-        }
-      }, READ_SLEEP)
-    );
+    }
+
+    await new Promise(r => setTimeout(r, READ_SLEEP));
+  }
+
+  console.log('Fetching teachers done!');
 }
 
 mongoose
@@ -72,7 +64,8 @@ mongoose
       .then(json => {
         const teachers = json.dep;
         console.log(`Read ${teachers.length} teachers`);
-        fetchTeacher(teachers, 0);
+        return fetchTeachers(teachers)
+          .then(() => mongoose.disconnect());
       });
   });
 
