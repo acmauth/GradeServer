@@ -12,6 +12,9 @@ const courseRoutes = require('./routes/course');
 const listRoutes = require('./routes/list');
 const authRoutes = require('./routes/auth');
 
+const DB_SERVER = process.env.db || "mongodb://127.0.0.1:27017/grade_plus_plus"
+const PORT = Number(process.env.port) || 3000
+
 var accessLogStream = rfs.createStream('access.log', {
   interval: '1d',
   path: path.join(__dirname, 'log')
@@ -20,7 +23,7 @@ dotenv.config();
 
 // Database
 mongoose
-  .connect(process.env.db, {
+  .connect(DB_SERVER, {
     useNewUrlParser: true,
     useUnifiedTopology: true
   })
@@ -66,4 +69,4 @@ app.use((error, req, res, next) => {
 });
 
 // Start server
-app.listen(3000, () => console.log('Server has started on port 3000...'));
+app.listen(PORT, () => console.log(`Server has started on port ${PORT}...`));
