@@ -162,6 +162,44 @@ module.exports = {
     addFavorite(req, res, Favorites.TEACHERS);
   },
 
+  changePassword: (req, res) => {
+    const previousPassword = req.body.previousPassword;
+    const newPassword = req.body.newPassword;
+
+    UserModel.findOne({_id: req.userData.userId })
+      .exec()
+      .then(user => {
+        if (!user) {
+          return res.status(400).send();
+        }
+        bcrypt.compare(previousPassword, user.password, (err, success) => {
+          if (err) {
+            return res.status(500).send();
+          }
+          if (success) {
+            bcrypt.hash(newPassword, 10, (err, hash) => {
+              if (err) {
+                return res.status(400).send();
+              } else {
+                user.password = hash;
+                user
+                .save()
+                .then(() => {
+                  res.status(200).send();
+                })
+              }
+            })
+          }
+        })
+      })
+      .catch(err => {
+        console.log(err);
+        res.status(500).json({
+          error: "Invalid credentials"
+        });
+      })
+  },
+
   getData: (req, res) => {
     res.json({});
   },
