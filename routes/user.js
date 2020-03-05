@@ -13,6 +13,8 @@ router.get('/profile', checkAuth, UserController.getProfile);
 
 router.patch('/profile', checkAuth, UserController.updateBio);
 
+router.patch('/change_password', checkAuth, UserController.changePassword)
+
 router.patch('/grades/list', checkAuth, UserController.updateGradesList);
 
 router.put('/grades/pdf', checkAuth, UserController.updateGradesPDF);

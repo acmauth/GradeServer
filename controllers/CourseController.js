@@ -3,6 +3,17 @@ const UserModel = require('../models/UserModel');
 const request = require('request');
 
 module.exports = {
+  check_version: (req, res) => {
+    request.get(process.env.flask + "check_version", (error, response) => {
+      if (error) {
+        return res.status(400).send();
+      }
+      if (response.version !== req.params.version_id) {
+        return this.predict(req, res);
+      }
+    })
+  },
+
   info: (req, res) => {
     CourseModel.findOne({ 'basic_info.code': req.params.course_id })
       .exec()
