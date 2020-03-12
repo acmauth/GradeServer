@@ -185,7 +185,7 @@ module.exports = {
                 user
                 .save()
                 .then(() => {
-                  res.status(200).send();
+                  res.json(generateToken(user))
                 })
               }
             })
