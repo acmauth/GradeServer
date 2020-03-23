@@ -1,27 +1,27 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const fileUpload = require('express-fileupload');
-const { exec } = require('child_process');
-const fs = require('fs');
+const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const fileUpload = require("express-fileupload");
+const { exec } = require("child_process");
+const fs = require("fs");
 
 const tokenList = {};
 
-const BioSchema = require('../models/schemas/BioSchema');
-const UserModel = require('../models/UserModel');
-const CourseModel = require('../models/CourseModel');
-const TeacherModel = require('../models/TeacherModel');
+const BioSchema = require("../models/schemas/BioSchema");
+const UserModel = require("../models/UserModel");
+const CourseModel = require("../models/CourseModel");
+const TeacherModel = require("../models/TeacherModel");
 
 const Favorites = {
   COURSES: {
     model: CourseModel,
-    collection: 'courses',
-    set: 'favorite_subjects'
+    collection: "courses",
+    set: "favorite_subjects"
   },
   TEACHERS: {
     model: TeacherModel,
-    collection: 'teachers',
-    set: 'favorite_teachers'
+    collection: "teachers",
+    set: "favorite_teachers"
   }
 };
 
@@ -34,7 +34,7 @@ function addFavorite(req, res, favorite) {
   }
   req.body[favorite.collection].forEach(async item => {
     const query = {};
-    query['_id'] = item;
+    query["_id"] = item;
     promises.push(
       favorite.model
         .countDocuments(query)
@@ -58,7 +58,7 @@ function addFavorite(req, res, favorite) {
         .catch();
     } else {
       res.status(400).json({
-        message: 'Invalid id'
+        message: "Invalid id"
       });
     }
   });
@@ -97,7 +97,7 @@ function removeFavorite(req, res, favorite) {
         .catch();
     } else {
       res.status(400).json(() => {
-        message: 'Invalid id';
+        message: "Invalid id";
       });
     }
   });
@@ -166,7 +166,7 @@ module.exports = {
     const previousPassword = req.body.previousPassword;
     const newPassword = req.body.newPassword;
 
-    UserModel.findOne({_id: req.userData.userId })
+    UserModel.findOne({ _id: req.userData.userId })
       .exec()
       .then(user => {
         if (!user) {
@@ -182,22 +182,24 @@ module.exports = {
                 return res.status(400).send();
               } else {
                 user.password = hash;
-                user
-                .save()
-                .then(() => {
-                  res.json(generateToken(user))
-                })
+                user.save().then(() => {
+                  res.json(generateToken(user));
+                });
               }
-            })
+            });
+          } else {
+            res.json({
+              error: "Invalid password"
+            });
           }
-        })
+        });
       })
       .catch(err => {
         console.log(err);
         res.status(500).json({
           error: "Invalid credentials"
         });
-      })
+      });
   },
 
   getData: (req, res) => {
@@ -224,9 +226,9 @@ module.exports = {
                 }
 
                 course.name = passedCourse.basic_info.name;
-                course.teacher = [...new Set(passedCourse.basic_info.class.teachers)].join(
-                  ', '
-                );
+                course.teacher = [
+                  ...new Set(passedCourse.basic_info.class.teachers)
+                ].join(", ");
               })
               .catch()
           );
@@ -362,7 +364,7 @@ module.exports = {
       tokenList[req.body.refreshToken].token = token;
       res.status(200).json(response);
     } else {
-      res.status(404).send('Invalid request');
+      res.status(404).send("Invalid request");
     }
   },
 
@@ -372,7 +374,7 @@ module.exports = {
       .then(user => {
         if (user.length > 0) {
           return res.status(409).json({
-            message: 'Mail exists'
+            message: "Mail exists"
           });
         } else {
           bcrypt.hash(req.body.password, 10, (err, hash) => {
@@ -458,10 +460,10 @@ module.exports = {
 
   updateGradesPDF: (req, res) => {
     var name = req.files.grades.name;
-    var index = name.lastIndexOf('.'); // TODO no dot?
+    var index = name.lastIndexOf("."); // TODO no dot?
     var ext = name.substring(index + 1);
     var dt = new Date().getTime();
-    var file = dt + '.' + ext;
+    var file = dt + "." + ext;
     var filePath = `./files/${file}`;
     req.files.grades.mv(filePath, err => {
       if (err) {
@@ -493,7 +495,7 @@ module.exports = {
               gradesJSON.courses.forEach(course => {
                 if (course.grade) {
                   promises.push(
-                    CourseModel.findOne({ 'basic_info.code': course.code })
+                    CourseModel.findOne({ "basic_info.code": course.code })
                       .exec()
                       .then(courseData => {
                         if (courseData) {
