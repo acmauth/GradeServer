@@ -188,7 +188,7 @@ module.exports = {
               }
             });
           } else {
-            res.json({
+            res.status(401).json({
               error: "Invalid password"
             });
           }
