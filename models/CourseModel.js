@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const CourseInfoSchema = new Schema({
@@ -27,9 +27,11 @@ const CourseInfoSchema = new Schema({
     }
   },
   metrics: {
-    distribution: [Number],
-    difficulty: Number
+    average: Number,
+    difficulty: String,
+    enrolled: Number,
+    histogram: [Number]
   }
 });
 
-module.exports = mongoose.model('Course', CourseInfoSchema);
+module.exports = mongoose.model("Course", CourseInfoSchema);
