@@ -79,39 +79,51 @@ module.exports = {
                 } else {
                   const predictions = response.body;
                   var info = {};
+                  var version = "";
 
-                  CourseModel.find({ _id: { $in: coursesToPredict } })
-                    .exec()
-                    .then((courses) => {
-                      courses.forEach((course) => {
-                        var distribution = 0;
-                        const grade = Math.round(predictions[course._id]);
-                        const histogram = course.metrics.histogram;
-                        const enrolled = course.metrics.enrolled;
+                  request.get(
+                    process.env.flask + "check_version",
+                    (error, response) => {
+                      if (error) {
+                        return res.status(400).send();
+                      }
 
-                        for (i = 0; i < grade; i++) {
-                          distribution += histogram[i];
-                        }
+                      version = JSON.parse(response.body);
+                      CourseModel.find({ _id: { $in: coursesToPredict } })
+                        .exec()
+                        .then((courses) => {
+                          info[`version`] = version;
 
-                        distribution = (distribution / enrolled) * 100;
+                          courses.forEach((course) => {
+                            var distribution = 0;
+                            const grade = Math.round(predictions[course._id]);
+                            const histogram = course.metrics.histogram;
+                            const enrolled = course.metrics.enrolled;
 
-                        info[`${course._id}`] = {
-                          name: course.basic_info.name,
-                          teachers: course.basic_info.class.teachers,
-                          gradePrediction: predictions[course._id],
-                          difficulty: course.metrics.difficulty,
-                          distribution,
-                          histogram,
-                          enrolled,
-                        };
-                      });
+                            for (i = 0; i < grade; i++) {
+                              distribution += histogram[i];
+                            }
 
-                      res.json(info);
-                    })
-                    .catch((err) => {
-                      console.error(`Error during course find():\n${err}`);
-                      res.status(500).send();
-                    });
+                            distribution = (distribution / enrolled) * 100;
+
+                            info[`${course._id}`] = {
+                              name: course.basic_info.name,
+                              teachers: course.basic_info.class.teachers,
+                              gradePrediction: predictions[course._id],
+                              difficulty: course.metrics.difficulty,
+                              distribution,
+                              histogram,
+                              enrolled,
+                            };
+                          });
+                          res.json(info);
+                        })
+                        .catch((err) => {
+                          console.error(`Error during course find():\n${err}`);
+                          res.status(500).send();
+                        });
+                    }
+                  );
                 }
               }
             );
