@@ -8,8 +8,12 @@ module.exports = {
       if (error) {
         return res.status(400).send();
       }
-      if (response.version !== req.params.version_id) {
-        return this.predict(req, res);
+      const version = JSON.parse(response.body).toString();
+
+      if (version !== req.params.version_id) {
+        res.redirect(`/course/predict`);
+      } else {
+        return res.status(200).send();
       }
     });
   },
