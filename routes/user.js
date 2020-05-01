@@ -23,6 +23,6 @@ router.delete("/request_deletion", checkAuth, deleteUser);
 
 /* Favorites */
 
-router.post("/favorites", checkAuth, UserController.favorites);
+router.post("/favorites", checkAuth, UserController.updateFavorites);
 
 module.exports = router;

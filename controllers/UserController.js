@@ -103,74 +103,6 @@ module.exports = {
       });
   },
 
-  favorites: (req, res) => {
-    const teachersPromise = new Promise((resolve) => {
-      var teachers = [];
-      if (req.body.teachers) {
-        req.body.teachers.forEach(async (item) => {
-          TeacherModel.findOne({ _id: item })
-            .then((teacher) => {
-              if (teacher) {
-                teachers.push(teacher);
-              }
-            })
-            .then(() => {
-              UserModel.updateOne(
-                { _id: req.userData.userId },
-                { $set: { favorite_teachers: teachers } }
-              )
-                .then(resolve())
-                .catch((err) => {
-                  console.error(`Error during user update():\n${err}`);
-                  res.status(500).send();
-                });
-            })
-            .catch((err) => {
-              console.error(`Error during teacher find():\n${err}`);
-              res.status(500).send();
-            });
-        });
-      } else {
-        resolve();
-      }
-    });
-
-    const coursesPromise = new Promise((resolve) => {
-      var courses = [];
-      if (req.body.courses) {
-        req.body.courses.forEach(async (item) => {
-          CourseModel.findOne({ _id: item })
-            .then((course) => {
-              if (course) {
-                courses.push(course);
-              }
-            })
-            .then(() => {
-              UserModel.updateOne(
-                { _id: req.userData.userId },
-                { $set: { favorite_subjects: courses } }
-              )
-                .then(resolve())
-                .catch((err) => {
-                  console.error(`Error during user update():\n${err}`);
-                  res.status(500).send();
-                });
-            })
-            .catch((err) => {
-              console.error(`Error during course find():\n${err}`);
-              res.status(500).send();
-            });
-        });
-      } else {
-        resolve();
-      }
-    });
-
-    Promise.all([teachersPromise, coursesPromise]).then(() => {
-      return res.status(204).send();
-    });
-  },
-
   getData: (req, res) => {
     res.json({});
   },
@@ -400,6 +332,74 @@ module.exports = {
         }
       })
       .catch((err) => res.status(400).send(err));
+  },
+
+  updateFavorites: (req, res) => {
+    const teachersPromise = new Promise((resolve) => {
+      var teachers = [];
+      if (req.body.teachers) {
+        req.body.teachers.forEach(async (item) => {
+          TeacherModel.findOne({ _id: item })
+            .then((teacher) => {
+              if (teacher) {
+                teachers.push(teacher);
+              }
+            })
+            .then(() => {
+              UserModel.updateOne(
+                { _id: req.userData.userId },
+                { $set: { favorite_teachers: teachers } }
+              )
+                .then(resolve())
+                .catch((err) => {
+                  console.error(`Error during user update():\n${err}`);
+                  res.status(500).send();
+                });
+            })
+            .catch((err) => {
+              console.error(`Error during teacher find():\n${err}`);
+              res.status(500).send();
+            });
+        });
+      } else {
+        resolve();
+      }
+    });
+
+    const coursesPromise = new Promise((resolve) => {
+      var courses = [];
+      if (req.body.courses) {
+        req.body.courses.forEach(async (item) => {
+          CourseModel.findOne({ _id: item })
+            .then((course) => {
+              if (course) {
+                courses.push(course);
+              }
+            })
+            .then(() => {
+              UserModel.updateOne(
+                { _id: req.userData.userId },
+                { $set: { favorite_subjects: courses } }
+              )
+                .then(resolve())
+                .catch((err) => {
+                  console.error(`Error during user update():\n${err}`);
+                  res.status(500).send();
+                });
+            })
+            .catch((err) => {
+              console.error(`Error during course find():\n${err}`);
+              res.status(500).send();
+            });
+        });
+      } else {
+        resolve();
+      }
+    });
+
+    Promise.all([teachersPromise, coursesPromise]).then(() => {
+      return res.status(204).send();
+    });
   },
 
   updateGradesList: (req, res) => {
