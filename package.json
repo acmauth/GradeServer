@@ -27,7 +27,7 @@
     "rotating-file-stream": "^2.0.0"
   },
   "devDependencies": {
-    "node-fetch": "^2.6.0",
+    "node-fetch": "^2.6.1",
     "nodemon": "^1.19.4"
   }
 }
