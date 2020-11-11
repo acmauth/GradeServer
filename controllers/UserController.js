@@ -169,9 +169,25 @@ module.exports = {
           );
         });
 
+        var currentCourses = [];
+
+        user.current_courses.forEach((course) => {
+          promises.push(
+          CourseModel.findOne({ _id: course })
+            .then((course) => {
+              currentCourses.push(course.basic_info.name);
+            })
+            .catch((err) => {
+              console.error(`Error during user update():\n${err}`);
+              return res.status(500).send();
+            })
+          )
+        })
+
         Promise.all(promises).then(() => {
           user.favorite_subjects = subjects;
           user.favorite_teachers = teachers;
+          user.current_courses = currentCourses;
           res.json(user);
         });
       })
