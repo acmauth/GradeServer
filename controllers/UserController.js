@@ -131,7 +131,10 @@ module.exports = {
                   ...new Set(passedCourse.basic_info.class.teachers),
                 ].join(", ");
               })
-              .catch()
+              .catch((err) => {
+                console.error(`Error during course findOne():\n${err}`);
+                return res.status(500).send();
+              })
           );
         });
 
@@ -148,7 +151,10 @@ module.exports = {
 
                 subjects.push(course.basic_info.name);
               })
-              .catch()
+              .catch((err) => {
+                console.error(`Error during course findOne():\n${err}`);
+                return res.status(500).send();
+              })
           );
         });
 
@@ -165,7 +171,10 @@ module.exports = {
 
                 teachers.push(selected.name);
               })
-              .catch()
+              .catch((err) => {
+                console.error(`Error during teacher findOne():\n${err}`);
+                return res.status(500).send();
+              })
           );
         });
 
@@ -178,7 +187,7 @@ module.exports = {
               currentCourses.push(course.basic_info.name);
             })
             .catch((err) => {
-              console.error(`Error during user update():\n${err}`);
+              console.error(`Error during course findOne():\n${err}`);
               return res.status(500).send();
             })
           )
@@ -191,7 +200,10 @@ module.exports = {
           res.json(user);
         });
       })
-      .catch();
+      .catch((err) => {
+        console.error(`Error during user findOne():\n${err}`);
+        return res.status(500).send();
+      })
   },
 
   login: (req, res) => {
@@ -449,7 +461,10 @@ module.exports = {
         user.save();
         res.status(201).send();
       })
-      .catch();
+      .catch((err) => {
+        console.error(`Error during user findOne():\n${err}`);
+        return res.status(500).send();
+      })
   },
 
   updateGradesPDF: (req, res) => {
@@ -503,7 +518,10 @@ module.exports = {
                           updateGrades(user, updatedCourse);
                         }
                       })
-                      .catch()
+                      .catch((err) => {
+                        console.error(`Error during course findOne():\n${err}`);
+                        return res.status(500).send();
+                      })
                   );
                 }
               });
@@ -511,7 +529,10 @@ module.exports = {
                 Promise.all(promises).then(() => user.save());
               }
             })
-            .catch();
+            .catch((err) => {
+              console.error(`Error during user findOne():\n${err}`);
+              return res.status(500).send();
+            })
           res.status(201).send();
           fs.unlink(filePath, (err) => {
             if (err) {
