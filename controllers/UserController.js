@@ -334,6 +334,32 @@ module.exports = {
       .catch((err) => res.status(400).send(err));
   },
 
+  updateCurrentCourses: (req, res) => {
+    var validCourses = [];
+
+    CourseModel.find({ _id: { $in: req.body.courses } })
+      .select("_id")
+      .then((courses) => {
+        if (courses) {
+          validCourses = courses.map((c) => c._id);
+        }
+      })
+      .then(() => {
+        UserModel.updateOne({ _id: req.userData.userId }, { $set: { current_courses: validCourses } })
+        .then(() => {
+          return res.status(204).send();
+        })
+        .catch((err) => {
+          console.error(`Error during user update():\n${err}`);
+          return res.status(500).send();
+        });
+      })
+      .catch((err) => {
+        console.error(`Error during teacher find():\n${err}`);
+        return res.status(500).send();
+      })
+  },
+
   updateFavorites: (req, res) => {
     var validTeachers = [];
     var validCourses = [];
