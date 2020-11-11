@@ -16,6 +16,7 @@ const UserSchema = new Schema({
   bio: { type: BioSchema, default: {} },
   favorite_subjects: [String],
   favorite_teachers: [String],
+  current_courses: [String],
   grades: [PassedCourseSchema],
   estimated_year: Number
 });
