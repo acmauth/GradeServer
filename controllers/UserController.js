@@ -68,13 +68,13 @@ module.exports = {
     const newPassword = req.body.newPassword;
 
     UserModel.findOne({ _id: req.userData.userId })
-      .exec()
       .then((user) => {
         if (!user) {
           return res.status(400).send();
         }
         bcrypt.compare(previousPassword, user.password, (err, success) => {
           if (err) {
+            console.error(`Error during password comparison:\n${err}`);
             return res.status(500).send();
           }
           if (success) {
@@ -84,20 +84,20 @@ module.exports = {
               } else {
                 user.password = hash;
                 user.save().then(() => {
-                  res.json(generateToken(user));
+                  return res.json(generateToken(user));
                 });
               }
             });
           } else {
-            res.status(401).json({
+            return res.status(401).json({
               error: "Invalid password",
             });
           }
         });
       })
       .catch((err) => {
-        console.log(err);
-        res.status(500).json({
+        console.error(`Error during user findOne():\n${err}`);
+        return res.status(500).json({
           error: "Invalid credentials",
         });
       });
@@ -197,7 +197,7 @@ module.exports = {
           user.favorite_subjects = subjects;
           user.favorite_teachers = teachers;
           user.current_courses = currentCourses;
-          res.json(user);
+          return res.json(user);
         });
       })
       .catch((err) => {
@@ -230,8 +230,8 @@ module.exports = {
         });
       })
       .catch((err) => {
-        console.log(err);
-        res.status(500).json({
+        console.error(`Error during user findOne():\n${err}`);
+        return res.status(500).json({
           error: err,
         });
       });
@@ -253,7 +253,6 @@ module.exports = {
         $set: fields,
       }
     )
-      .exec()
       .then((status) => {
         if (status.nModified == 1) {
           res.status(200).send(status);
@@ -261,7 +260,10 @@ module.exports = {
           res.status(400).send(status);
         }
       })
-      .catch((err) => res.status(400).send(err));
+      .catch((err) => {
+        console.error(`Error during user updateOne():\n${err}`);
+        return res.status(400).send();
+      })
   },
 
   refreshToken: (req, res) => {
@@ -283,15 +285,14 @@ module.exports = {
       };
 
       tokenList[req.body.refreshToken].token = token;
-      res.status(200).json(response);
+      return res.status(200).json(response);
     } else {
-      res.status(404).send("Invalid request");
+      return res.status(404).send("Invalid request");
     }
   },
 
   signup: (req, res) => {
     UserModel.find({ email: req.body.email })
-      .exec()
       .then((user) => {
         if (user.length > 0) {
           return res.status(409).json({
@@ -312,11 +313,11 @@ module.exports = {
               user
                 .save()
                 .then(() => {
-                  res.status(201).json(generateToken(user));
+                  return res.status(201).json(generateToken(user));
                 })
                 .catch((err) => {
-                  console.log(err);
-                  res.status(500).json({
+                  console.error(`Error during user save():\n${err}`);
+                  return res.status(500).json({
                     error: "Invalid credentials",
                   });
                 });
@@ -343,7 +344,6 @@ module.exports = {
         $set: fields,
       }
     )
-      .exec()
       .then((status) => {
         if (status.nModified == 1) {
           // UserModel.findById(id)
@@ -359,7 +359,10 @@ module.exports = {
           res.status(400).send(status);
         }
       })
-      .catch((err) => res.status(400).send(err));
+      .catch((err) => {
+        console.error(`Error during user updateOne():\n${err}`);
+        return res.status(400).send();
+      })
   },
 
   updateCurrentCourses: (req, res) => {
