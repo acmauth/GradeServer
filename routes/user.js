@@ -25,4 +25,6 @@ router.delete("/request_deletion", checkAuth, deleteUser);
 
 router.post("/favorites", checkAuth, UserController.updateFavorites);
 
+router.post("/current_courses", checkAuth, UserController.updateCurrentCourses);
+
 module.exports = router;

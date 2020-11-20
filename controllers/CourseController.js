@@ -104,7 +104,7 @@ module.exports = {
                             const histogram = course.metrics.histogram;
                             const enrolled = course.metrics.enrolled;
 
-                            for (i = 0; i < grade; i++) {
+                            for (i = 0; i < grade - 1; i++) {
                               distribution += histogram[i];
                             }
 
