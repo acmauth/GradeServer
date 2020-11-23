@@ -10,6 +10,9 @@ module.exports = {
         })
         res.json(teachers);
       })
-      .catch();
+      .catch((err) => {
+        console.error(`Error during teacher find():\n${err}`);
+        return res.status(500).send();
+      });
   }
 };
