@@ -29,7 +29,10 @@ module.exports = {
         course.__v = undefined;
         res.json(course);
       })
-      .catch();
+      .catch((err) => {
+        console.error(`Error during course findOne():\n${err}`);
+        return res.status(500).send();
+      });
   },
 
   list: (req, res) => {
@@ -41,7 +44,10 @@ module.exports = {
         });
         res.json(courses);
       })
-      .catch();
+      .catch((err) => {
+        console.error(`Error during course findOne():\n${err}`);
+        return res.status(500).send();
+      });
   },
 
   predict: (req, res) => {
