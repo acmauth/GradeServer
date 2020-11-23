@@ -122,8 +122,7 @@ module.exports = {
               .exec()
               .then((passedCourse) => {
                 if (!passedCourse) {
-                  // res.status(400).send();
-                  return;
+                  return res.status(400).send();
                 }
 
                 course.name = passedCourse.basic_info.name;
@@ -145,8 +144,7 @@ module.exports = {
               .exec()
               .then((course) => {
                 if (!course) {
-                  // res.status(400).send();
-                  return;
+                  return res.status(400).send();
                 }
 
                 subjects.push(course.basic_info.name);
@@ -162,11 +160,9 @@ module.exports = {
         user.favorite_teachers.forEach((teacher) => {
           promises.push(
             TeacherModel.findOne({ _id: teacher })
-              .exec()
               .then((selected) => {
                 if (!selected) {
-                  // res.status(400).send();
-                  return;
+                  return res.status(400).send();
                 }
 
                 teachers.push(selected.name);
@@ -255,9 +251,9 @@ module.exports = {
     )
       .then((status) => {
         if (status.nModified == 1) {
-          res.status(200).send(status);
+          return res.status(200).send(status);
         } else {
-          res.status(400).send(status);
+          return res.status(400).send(status);
         }
       })
       .catch((err) => {
@@ -354,9 +350,9 @@ module.exports = {
           //     user.__v = undefined;
           //     res.json(user);
           //   });
-          res.status(200).send(status);
+          return res.status(200).send(status);
         } else {
-          res.status(400).send(status);
+          return res.status(400).send(status);
         }
       })
       .catch((err) => {
@@ -455,14 +451,13 @@ module.exports = {
       .exec()
       .then((user) => {
         if (!user) {
-          res.status(400).send();
-          return;
+          return res.status(400).send();
         }
         req.body.courses.forEach((course) => {
           updateGrades(user, course);
         });
         user.save();
-        res.status(201).send();
+        return res.status(201).send();
       })
       .catch((err) => {
         console.error(`Error during user findOne():\n${err}`);
@@ -479,36 +474,32 @@ module.exports = {
     var filePath = `./files/${file}`;
     req.files.grades.mv(filePath, (err) => {
       if (err) {
-        res.status(500).send();
-        console.log(err);
-        return;
+        console.error(err);
+        return res.status(500).send();
       }
 
       exec(
         `java -jar ./parser.jar -json './files/${file}'`,
         (error, stdout, stderr) => {
-          if (error) {
-            res.status(500).json({
+          if (err) {
+            console.error(err);
+            return res.status(500).json({
               error: "Invalid file",
             });
-            console.log(error);
-            return;
           }
+
           var jsonPath = `./json/${dt}_results.json`;
           var gradesJSON = require(`.${jsonPath}`);
           UserModel.findOne({ _id: req.userData.userId })
-            .exec()
             .then((user) => {
               if (!user) {
-                res.status(400).send();
-                return;
+                return res.status(400).send();
               }
               var promises = [];
               gradesJSON.courses.forEach((course) => {
                 if (course.grade) {
                   promises.push(
                     CourseModel.findOne({ "basic_info.code": course.code })
-                      .exec()
                       .then((courseData) => {
                         if (courseData) {
                           var updatedCourse = {
@@ -536,17 +527,20 @@ module.exports = {
               console.error(`Error during user findOne():\n${err}`);
               return res.status(500).send();
             })
-          res.status(201).send();
+
           fs.unlink(filePath, (err) => {
             if (err) {
-              console.log(err);
+              console.error(err);
             }
           });
+
           fs.unlink(jsonPath, (err) => {
             if (err) {
-              console.log(err);
+              console.error(err);
             }
           });
+
+          return res.status(201).send();
         }
       );
     });
