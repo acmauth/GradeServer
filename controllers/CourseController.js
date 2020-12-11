@@ -20,28 +20,33 @@ module.exports = {
 
   info: (req, res) => {
     CourseModel.findOne({ _id: req.params.course_id })
-      .exec()
       .then((course) => {
         if (!course) {
-          res.status(404).send();
-          return;
+          return res.status(404).send();
         }
+
         course.__v = undefined;
-        res.json(course);
+        return res.json(course);
       })
-      .catch();
+      .catch((err) => {
+        console.error(`Error during course findOne():\n${err}`);
+        return res.status(500).send();
+      });
   },
 
   list: (req, res) => {
     CourseModel.find()
-      .exec()
       .then((courses) => {
         courses.forEach((course) => {
           course.__v = undefined;
         });
-        res.json(courses);
+
+        return res.json(courses);
       })
-      .catch();
+      .catch((err) => {
+        console.error(`Error during course findOne():\n${err}`);
+        return res.status(500).send();
+      });
   },
 
   predict: (req, res) => {
@@ -53,7 +58,6 @@ module.exports = {
       } else {
         const allCourses = JSON.parse(response.body);
         UserModel.findOne({ _id: req.userData.userId })
-          .exec()
           .then((user) => {
             const grades = user.grades;
             var passedCourses = [];
@@ -120,7 +124,7 @@ module.exports = {
                               enrolled,
                             };
                           });
-                          res.json(info);
+                          return res.json(info);
                         })
                         .catch((err) => {
                           console.error(`Error during course find():\n${err}`);
@@ -134,7 +138,7 @@ module.exports = {
           })
           .catch((err) => {
             console.error(`Error during user find():\n${err}`);
-            res.status(500).send();
+            return res.status(500).send();
           });
       }
     });
