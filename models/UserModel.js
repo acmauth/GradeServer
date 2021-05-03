@@ -1,8 +1,8 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
-const BioSchema = require('./schemas/BioSchema');
-const PassedCourseSchema = require('./schemas/PassedCourseSchema');
+const BioSchema = require("./schemas/BioSchema");
+const PassedCourseSchema = require("./schemas/PassedCourseSchema");
 
 const UserSchema = new Schema({
   _id: mongoose.Schema.Types.ObjectId,
@@ -10,7 +10,7 @@ const UserSchema = new Schema({
     type: String,
     required: true,
     unique: true,
-    match: /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/
+    match: /[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?/,
   },
   password: { type: String, required: true },
   bio: { type: BioSchema, default: {} },
@@ -18,7 +18,7 @@ const UserSchema = new Schema({
   favorite_teachers: [String],
   current_courses: [String],
   grades: [PassedCourseSchema],
-  estimated_year: Number
+  estimated_year: Number,
 });
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.model("User", UserSchema);
