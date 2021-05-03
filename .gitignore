@@ -65,3 +65,4 @@ files/
 json/
 csv/
 nodemon.json
+db/

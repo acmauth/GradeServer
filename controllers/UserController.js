@@ -1,11 +1,8 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const fileUpload = require("express-fileupload");
 const { exec } = require("child_process");
 const fs = require("fs");
-
-const tokenList = {};
 
 const BioSchema = require("../models/schemas/BioSchema");
 const UserModel = require("../models/UserModel");
@@ -36,10 +33,10 @@ function generateToken(user) {
   );
 
   const response = {
-    token: token,
-    refreshToken: refreshToken,
+    token,
+    refreshToken,
   };
-  tokenList[refreshToken] = response;
+
   return response;
 }
 
@@ -178,16 +175,16 @@ module.exports = {
 
         user.current_courses.forEach((course) => {
           promises.push(
-          CourseModel.findOne({ _id: course })
-            .then((course) => {
-              currentCourses.push(course.basic_info.name);
-            })
-            .catch((err) => {
-              console.error(`Error during course findOne():\n${err}`);
-              return res.status(500).send();
-            })
-          )
-        })
+            CourseModel.findOne({ _id: course })
+              .then((course) => {
+                currentCourses.push(course.basic_info.name);
+              })
+              .catch((err) => {
+                console.error(`Error during course findOne():\n${err}`);
+                return res.status(500).send();
+              })
+          );
+        });
 
         Promise.all(promises).then(() => {
           user.favorite_subjects = subjects;
@@ -199,7 +196,7 @@ module.exports = {
       .catch((err) => {
         console.error(`Error during user findOne():\n${err}`);
         return res.status(500).send();
-      })
+      });
   },
 
   login: (req, res) => {
@@ -217,9 +214,11 @@ module.exports = {
             // Reject request with internal error.
             return res.status(500).send();
           }
+
           if (success) {
             return res.status(200).json(generateToken(user));
           }
+
           return res.status(401).json({
             error: "Invalid credentials",
           });
@@ -259,28 +258,29 @@ module.exports = {
       .catch((err) => {
         console.error(`Error during user updateOne():\n${err}`);
         return res.status(400).send();
-      })
+      });
   },
 
   refreshToken: (req, res) => {
     var refreshToken = req.body.refreshToken;
-    if (refreshToken && refreshToken in tokenList) {
+    const decoded = jwt.verify(refreshToken, process.env.refreshTokenSecret);
+
+    if (decoded.email && decoded.userId) {
       const token = jwt.sign(
         {
-          email: req.body.email,
-          userId: req.body._id,
+          email: decoded.email,
+          userId: decoded.userId,
         },
-        process.env.refreshTokenSecret,
+        process.env.tokenSecretKey,
         {
           expiresIn: process.env.tokenLife,
         }
       );
 
       const response = {
-        token: token,
+        token,
       };
 
-      tokenList[req.body.refreshToken].token = token;
       return res.status(200).json(response);
     } else {
       return res.status(404).send("Invalid request");
@@ -288,39 +288,38 @@ module.exports = {
   },
 
   signup: (req, res) => {
-    UserModel.find({ email: req.body.email })
-      .then((user) => {
-        if (user.length > 0) {
-          return res.status(409).json({
-            message: "Mail exists",
-          });
-        } else {
-          bcrypt.hash(req.body.password, 10, (err, hash) => {
-            if (err) {
-              return res.status(400).json({
-                error: "Invalid request",
-              });
-            } else {
-              const user = new UserModel({
-                _id: new mongoose.Types.ObjectId(),
-                email: req.body.email,
-                password: hash,
-              });
-              user
-                .save()
-                .then(() => {
-                  return res.status(201).json(generateToken(user));
-                })
-                .catch((err) => {
-                  console.error(`Error during user save():\n${err}`);
-                  return res.status(500).json({
-                    error: "Invalid credentials",
-                  });
+    UserModel.find({ email: req.body.email }).then((user) => {
+      if (user.length > 0) {
+        return res.status(409).json({
+          message: "Mail exists",
+        });
+      } else {
+        bcrypt.hash(req.body.password, 10, (err, hash) => {
+          if (err) {
+            return res.status(400).json({
+              error: "Invalid request",
+            });
+          } else {
+            const user = new UserModel({
+              _id: new mongoose.Types.ObjectId(),
+              email: req.body.email,
+              password: hash,
+            });
+            user
+              .save()
+              .then(() => {
+                return res.status(201).json(generateToken(user));
+              })
+              .catch((err) => {
+                console.error(`Error during user save():\n${err}`);
+                return res.status(500).json({
+                  error: "Invalid credentials",
                 });
-            }
-          });
-        }
-      });
+              });
+          }
+        });
+      }
+    });
   },
 
   updateBio: (req, res) => {
@@ -358,7 +357,7 @@ module.exports = {
       .catch((err) => {
         console.error(`Error during user updateOne():\n${err}`);
         return res.status(400).send();
-      })
+      });
   },
 
   updateCurrentCourses: (req, res) => {
@@ -372,19 +371,22 @@ module.exports = {
         }
       })
       .then(() => {
-        UserModel.updateOne({ _id: req.userData.userId }, { $set: { current_courses: validCourses } })
-        .then(() => {
-          return res.status(204).send();
-        })
-        .catch((err) => {
-          console.error(`Error during user update():\n${err}`);
-          return res.status(500).send();
-        });
+        UserModel.updateOne(
+          { _id: req.userData.userId },
+          { $set: { current_courses: validCourses } }
+        )
+          .then(() => {
+            return res.status(204).send();
+          })
+          .catch((err) => {
+            console.error(`Error during user update():\n${err}`);
+            return res.status(500).send();
+          });
       })
       .catch((err) => {
         console.error(`Error during teacher find():\n${err}`);
         return res.status(500).send();
-      })
+      });
   },
 
   updateFavorites: (req, res) => {
@@ -462,7 +464,7 @@ module.exports = {
       .catch((err) => {
         console.error(`Error during user findOne():\n${err}`);
         return res.status(500).send();
-      })
+      });
   },
 
   updateGradesPDF: (req, res) => {
@@ -526,7 +528,7 @@ module.exports = {
             .catch((err) => {
               console.error(`Error during user findOne():\n${err}`);
               return res.status(500).send();
-            })
+            });
 
           fs.unlink(filePath, (err) => {
             if (err) {
