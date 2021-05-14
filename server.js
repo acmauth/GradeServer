@@ -7,6 +7,8 @@ const rfs = require("rotating-file-stream");
 const path = require("path");
 const app = express();
 
+app.set('trust proxy','127.0.0.1');
+
 const userRoutes = require("./routes/user");
 const courseRoutes = require("./routes/course");
 const listRoutes = require("./routes/list");
