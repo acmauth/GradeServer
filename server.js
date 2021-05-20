@@ -42,7 +42,7 @@ mongoose
 
 mongoose.set("useCreateIndex", true);
 
-var allowedOrigins = ["http://localhost", "http:127.0.0.1", "http://0.0.0.0"];
+var allowedOrigins = ["http://localhost", "http://127.0.0.1", "http://0.0.0.0"];
 
 // Middleware
 app.use(
