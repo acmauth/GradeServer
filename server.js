@@ -5,9 +5,10 @@ const dotenv = require("dotenv");
 const morgan = require("morgan");
 const rfs = require("rotating-file-stream");
 const path = require("path");
+const cors = require("cors");
 const app = express();
 
-app.set('trust proxy','127.0.0.1');
+app.set("trust proxy", "127.0.0.1");
 
 const userRoutes = require("./routes/user");
 const courseRoutes = require("./routes/course");
@@ -41,7 +42,27 @@ mongoose
 
 mongoose.set("useCreateIndex", true);
 
+var allowedOrigins = ["http://localhost", "http:127.0.0.1", "http://0.0.0.0"];
+
 // Middleware
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      origin = origin.substring(0, origin.lastIndexOf(":"));
+      if (allowedOrigins.indexOf(origin) === -1) {
+        var msg =
+          "The CORS policy of this site does not allow access from the specified origin.";
+
+        return callback(new Error(msg), false);
+      }
+
+      return callback(null, true);
+    },
+  })
+);
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(
